@@ -24,6 +24,26 @@
 
 ---
 
+## 🧪 Contexte LAB (PC local)
+
+Ce LAB vise à simuler **2 sites distincts** sur une seule machine afin de valider l’architecture avant un déploiement réel.
+
+### ✅ Environnement cible
+
+- **OS** : Ubuntu 22.04
+- **CPU** : Intel Core 7 vPRO
+- **RAM** : 16 Go (objectif : **8 Go alloués au LAB**)
+- **Conteneurisation** : Docker + Docker Compose
+
+### 📦 Hypothèses du LAB
+
+- Les deux “datacenters” sont simulés par **deux stacks Docker Compose séparées** (dc1/dc2).
+- Chaque DC expose ses services sur des **ports différents** (pour éviter les conflits).
+- Les résolutions DNS/GSLB sont simulées via le **/etc/hosts** ou un reverse proxy local.
+- Les volumes et secrets sont **locaux** (pas de stockage partagé entre DC).
+
+---
+
 ## 🧩 Stack technique (versions épinglées)
 
 | Composant | Image Docker | Version | Rôle |
@@ -75,6 +95,74 @@ passbolt-ha/
     ├── incident_dc.md
     ├── backup_restore.md
     └── upgrade.md
+```
+
+---
+
+## 🛠️ Démarrage rapide (LAB local)
+
+### 1) Pré-requis
+
+- Docker Engine + Docker Compose v2
+- Un utilisateur dans le groupe `docker`
+- Accès sudo pour créer les dossiers locaux
+
+### 2) Préparation des dossiers
+
+```bash
+sudo mkdir -p /opt/passbolt/{dc1,dc2}/{gpg_volume,jwt_volume}
+sudo mkdir -p /opt/passbolt/{dc1,dc2}/db/data
+sudo chown -R $USER:$USER /opt/passbolt
+```
+
+### 3) Variables d’environnement
+
+```bash
+cp env/dc1.env.example env/dc1.env
+cp env/dc2.env.example env/dc2.env
+```
+
+> Adapter les URLs en local, par exemple :  
+> `https://passbolt-dc1.local` et `https://passbolt-dc2.local`
+
+### 4) Secrets (LAB)
+
+```bash
+mkdir -p secrets
+openssl rand -base64 32 > secrets/db_password.txt
+openssl rand -base64 32 > secrets/smtp_password.txt
+openssl rand -base64 64 > secrets/jwt_secret.txt
+```
+
+### 5) Lancement des stacks DC1 / DC2
+
+```bash
+docker compose -f compose/dc1/reverse-proxy.compose.yml \
+  -f compose/dc1/passbolt-app.compose.yml \
+  -f compose/dc1/db-galera.compose.yml \
+  -f compose/dc1/observability.compose.yml up -d
+
+docker compose -f compose/dc2/reverse-proxy.compose.yml \
+  -f compose/dc2/passbolt-app.compose.yml \
+  -f compose/dc2/db-galera.compose.yml \
+  -f compose/dc2/observability.compose.yml up -d
+```
+
+### 6) Simulation DNS locale
+
+```bash
+sudo tee -a /etc/hosts <<'EOF'
+127.0.0.1 passbolt-dc1.local
+127.0.0.1 passbolt-dc2.local
+EOF
+```
+
+### 7) Vérifications rapides
+
+```bash
+docker ps
+docker compose -f compose/dc1/passbolt-app.compose.yml logs -f
+docker compose -f compose/dc2/passbolt-app.compose.yml logs -f
 ```
 
 ---
