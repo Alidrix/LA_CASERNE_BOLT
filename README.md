@@ -30,7 +30,7 @@
 | --- | --- | --- | --- |
 | Passbolt CE | `passbolt/passbolt` | `5.9.0-1-ce-non-root` | Application |
 | Reverse Proxy | `traefik` | `v3.6.7` | TLS / LB |
-| Base de données | MariaDB Galera | Cluster 3 nœuds | Quorum HA |
+| Base de données | `bitnami/mariadb-galera` | `11.4.3-debian-12-r0` | Quorum HA |
 | Metrics | `prom/prometheus` | `3.5.1` | Supervision |
 | Logs | `grafana/loki` | `3.6.1` | Centralisation logs |
 | Dashboards | `grafana/grafana` | `12.0.9` | Visualisation |
@@ -43,32 +43,31 @@
 ## 🗂️ Arborescence du dépôt
 
 ```text
-passbolt-ha/
+.
 ├── README.md
 ├── compose/
 │   ├── dc1/
 │   │   ├── reverse-proxy.compose.yml
 │   │   ├── passbolt-app.compose.yml
 │   │   ├── db-galera.compose.yml
-│   │   └── observability.compose.yml
+│   │   ├── observability.compose.yml
+│   │   └── observability/
+│   │       ├── loki-config.yml
+│   │       └── prometheus.yml
 │   └── dc2/
 │       ├── reverse-proxy.compose.yml
 │       ├── passbolt-app.compose.yml
 │       ├── db-galera.compose.yml
-│       └── observability.compose.yml
+│       ├── observability.compose.yml
+│       └── observability/
+│           ├── loki-config.yml
+│           └── prometheus.yml
 ├── env/
 │   ├── dc1.env.example
 │   └── dc2.env.example
-├── secrets/        # jamais commit
-│   ├── db_password.txt
-│   ├── smtp_password.txt
-│   └── jwt_secret.txt
-├── volumes/
-│   ├── passbolt/
-│   │   ├── gpg_volume/
-│   │   └── jwt_volume/
-│   └── db/
-│       └── data/
+├── secrets/        # jamais commit (local uniquement)
+│   └── db_password.txt
+├── volumes/        # volumes Docker locaux
 └── runbooks/
     ├── incident_app.md
     ├── incident_db.md
@@ -238,3 +237,58 @@ docker restart passbolt
 - Supervision & alerting actifs
 - Runbooks testés
 - Mises à jour automatisées
+
+---
+
+## 🧪 LAB local (Ubuntu 22.04, 8 Go RAM)
+
+### 1) Pré-requis
+- Docker + Docker Compose v2 installés
+- Ports disponibles sur la machine locale
+
+### 2) Préparer les variables d’environnement
+```bash
+cp env/dc1.env.example env/dc1.env
+cp env/dc2.env.example env/dc2.env
+```
+
+### 3) Créer les secrets locaux
+```bash
+mkdir -p secrets
+echo "ChangeDbMe!" > secrets/db_password.txt
+```
+> Le contenu du secret doit correspondre à `DB_PASSWORD` dans vos fichiers `.env`.
+
+### 4) Créer les réseaux partagés
+```bash
+docker network create dc1-net
+docker network create dc2-net
+docker network create galera-net
+```
+
+### 5) Démarrer DC1 & DC2
+```bash
+docker compose -f compose/dc1/reverse-proxy.compose.yml up -d
+docker compose -f compose/dc1/db-galera.compose.yml up -d
+docker compose -f compose/dc1/passbolt-app.compose.yml up -d
+docker compose -f compose/dc1/observability.compose.yml up -d
+
+docker compose -f compose/dc2/reverse-proxy.compose.yml up -d
+docker compose -f compose/dc2/db-galera.compose.yml up -d
+docker compose -f compose/dc2/passbolt-app.compose.yml up -d
+docker compose -f compose/dc2/observability.compose.yml up -d
+```
+
+### 6) (Optionnel) Démarrer Grafana OnCall
+```bash
+docker compose -f compose/dc1/observability.compose.yml --profile oncall up -d
+docker compose -f compose/dc2/observability.compose.yml --profile oncall up -d
+```
+
+### 7) Accès locaux
+- Passbolt DC1 : http://passbolt-dc1.local (Traefik exposé sur `:8081`)
+- Passbolt DC2 : http://passbolt-dc2.local (Traefik exposé sur `:8082`)
+- Grafana DC1 : http://localhost:3001
+- Grafana DC2 : http://localhost:3002
+
+> Pensez à ajouter les entrées `passbolt-dc1.local` et `passbolt-dc2.local` dans `/etc/hosts`.
