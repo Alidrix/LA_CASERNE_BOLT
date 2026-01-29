@@ -1,0 +1,28 @@
+services:
+  galera-3:
+    image: bitnami/mariadb-galera:11.4.3-debian-12-r0
+    container_name: dc2-galera-3
+    env_file:
+      - ../../env/dc2.env
+    environment:
+      MARIADB_GALERA_CLUSTER_NAME: passbolt-galera
+      MARIADB_GALERA_CLUSTER_ADDRESS: gcomm://dc1-galera-1,dc1-galera-2,dc2-galera-3
+      MARIADB_GALERA_NODE_NAME: dc2-galera-3
+      MARIADB_GALERA_NODE_ADDRESS: dc2-galera-3
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: passbolt
+      MARIADB_USER: passbolt
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - /opt/passbolt/dc2/db/data/galera-3:/bitnami/mariadb
+    networks:
+      - dc2-net
+      - galera-net
+
+networks:
+  dc2-net:
+    name: dc2-net
+    external: true
+  galera-net:
+    name: galera-net
+    external: true

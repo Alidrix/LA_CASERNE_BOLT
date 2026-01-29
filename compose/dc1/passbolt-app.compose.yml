@@ -1,0 +1,33 @@
+services:
+  passbolt:
+    image: passbolt/passbolt:5.9.0-1-ce-non-root
+    container_name: dc1-passbolt
+    env_file:
+      - ../../env/dc1.env
+    environment:
+      APP_FULL_BASE_URL: ${DC1_PASSBOLT_URL}
+      DATASOURCES_DEFAULT_HOST: dc1-galera-1
+      DATASOURCES_DEFAULT_DATABASE: passbolt
+      DATASOURCES_DEFAULT_USERNAME: passbolt
+      DATASOURCES_DEFAULT_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - /opt/passbolt/dc1/gpg_volume:/etc/passbolt/gpg
+      - /opt/passbolt/dc1/jwt_volume:/etc/passbolt/jwt
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.passbolt-dc1.rule=Host(`${DC1_PASSBOLT_HOST}`)
+      - traefik.http.routers.passbolt-dc1.entrypoints=web
+      - traefik.http.services.passbolt-dc1.loadbalancer.server.port=8080
+    networks:
+      - dc1-net
+
+secrets:
+  db_password:
+    file: ../../secrets/db_password.txt
+
+networks:
+  dc1-net:
+    name: dc1-net
+    external: true

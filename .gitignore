@@ -1,0 +1,7 @@
+# Runtime env files
+/env/*.env
+/secrets/
+/volumes/
+
+# Local overrides
+*.local

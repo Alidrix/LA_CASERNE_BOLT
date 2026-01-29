@@ -30,7 +30,7 @@
 | --- | --- | --- | --- |
 | Passbolt CE | `passbolt/passbolt` | `5.9.0-1-ce-non-root` | Application |
 | Reverse Proxy | `traefik` | `v3.6.7` | TLS / LB |
-| Base de données | MariaDB Galera | Cluster 3 nœuds | Quorum HA |
+| Base de données | `bitnami/mariadb-galera` | `11.4.3-debian-12-r0` | Quorum HA |
 | Metrics | `prom/prometheus` | `3.5.1` | Supervision |
 | Logs | `grafana/loki` | `3.6.1` | Centralisation logs |
 | Dashboards | `grafana/grafana` | `12.0.9` | Visualisation |
@@ -43,32 +43,33 @@
 ## 🗂️ Arborescence du dépôt
 
 ```text
-passbolt-ha/
+.
 ├── README.md
+├── setup_lab.sh
 ├── compose/
 │   ├── dc1/
 │   │   ├── reverse-proxy.compose.yml
 │   │   ├── passbolt-app.compose.yml
 │   │   ├── db-galera.compose.yml
-│   │   └── observability.compose.yml
+│   │   ├── observability.compose.yml
+│   │   └── observability/
+│   │       ├── loki-config.yml
+│   │       └── prometheus.yml
 │   └── dc2/
 │       ├── reverse-proxy.compose.yml
 │       ├── passbolt-app.compose.yml
 │       ├── db-galera.compose.yml
-│       └── observability.compose.yml
+│       ├── observability.compose.yml
+│       └── observability/
+│           ├── loki-config.yml
+│           └── prometheus.yml
 ├── env/
 │   ├── dc1.env.example
 │   └── dc2.env.example
-├── secrets/        # jamais commit
+├── secrets/        # jamais commit (local uniquement)
 │   ├── db_password.txt
 │   ├── smtp_password.txt
 │   └── jwt_secret.txt
-├── volumes/
-│   ├── passbolt/
-│   │   ├── gpg_volume/
-│   │   └── jwt_volume/
-│   └── db/
-│       └── data/
 └── runbooks/
     ├── incident_app.md
     ├── incident_db.md
@@ -238,3 +239,31 @@ docker restart passbolt
 - Supervision & alerting actifs
 - Runbooks testés
 - Mises à jour automatisées
+
+---
+
+## 🧪 LAB local (Ubuntu 22.04, 8 Go RAM)
+
+### 1) Pré-requis
+- Docker + Docker Compose v2 installés
+- Ports disponibles sur la machine locale
+- Accès sudo pour créer l'utilisateur `thepassbolt`, le groupe `passbolt` et les dossiers `/opt/passbolt`
+
+### Démarrage rapide via script
+Le script `setup_lab.sh` automatise la création des dossiers `/opt/passbolt`, du compte `thepassbolt:passbolt`, des secrets, des réseaux, le démarrage des stacks DC1/DC2 et l'ajout des entrées DNS locales.
+
+```bash
+./setup_lab.sh
+```
+
+### Exécution manuelle (étapes principales)
+1. Préparer les fichiers `.env` depuis les exemples.
+2. Créer les secrets dans `secrets/`.
+3. Lancer les stacks `docker compose` pour DC1 et DC2.
+4. Ajouter les entrées `/etc/hosts` pour `passbolt-dc1.local` et `passbolt-dc2.local`.
+
+### Accès locaux
+- Passbolt DC1 : https://passbolt-dc1.local (Traefik exposé sur `:8081`)
+- Passbolt DC2 : https://passbolt-dc2.local (Traefik exposé sur `:8082`)
+- Grafana DC1 : http://localhost:3001
+- Grafana DC2 : http://localhost:3002
