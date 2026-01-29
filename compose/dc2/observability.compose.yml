@@ -1,0 +1,98 @@
+services:
+  prometheus:
+    image: prom/prometheus:3.5.1
+    container_name: dc2-prometheus
+    env_file:
+      - ../../env/dc2.env
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../../volumes/observability/dc2/prometheus:/prometheus
+    networks:
+      - dc2-net
+
+  loki:
+    image: grafana/loki:3.6.1
+    container_name: dc2-loki
+    env_file:
+      - ../../env/dc2.env
+    command: -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "3102:3100"
+    volumes:
+      - ./observability/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - ../../volumes/observability/dc2/loki:/loki
+    networks:
+      - dc2-net
+
+  grafana:
+    image: grafana/grafana:12.0.9
+    container_name: dc2-grafana
+    env_file:
+      - ../../env/dc2.env
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+    ports:
+      - "3002:3000"
+    volumes:
+      - ../../volumes/observability/dc2/grafana:/var/lib/grafana
+    networks:
+      - dc2-net
+
+  oncall-db:
+    image: postgres:16.3
+    container_name: dc2-oncall-db
+    profiles: ["oncall"]
+    env_file:
+      - ../../env/dc2.env
+    environment:
+      POSTGRES_DB: oncall
+      POSTGRES_USER: oncall
+      POSTGRES_PASSWORD: ${ONCALL_DB_PASSWORD}
+    volumes:
+      - ../../volumes/observability/dc2/oncall-db:/var/lib/postgresql/data
+    networks:
+      - dc2-net
+
+  oncall-redis:
+    image: redis:7.4.0
+    container_name: dc2-oncall-redis
+    profiles: ["oncall"]
+    env_file:
+      - ../../env/dc2.env
+    networks:
+      - dc2-net
+
+  oncall:
+    image: grafana/oncall:v1.16.9
+    container_name: dc2-oncall
+    profiles: ["oncall"]
+    env_file:
+      - ../../env/dc2.env
+    environment:
+      DATABASE_TYPE: postgres
+      DATABASE_HOST: oncall-db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: oncall
+      DATABASE_USER: oncall
+      DATABASE_PASSWORD: ${ONCALL_DB_PASSWORD}
+      REDIS_URL: redis://oncall-redis:6379/0
+      SECRET_KEY: ${ONCALL_SECRET_KEY}
+      ALLOWED_HOSTS: "*"
+    ports:
+      - "8084:8080"
+    depends_on:
+      - oncall-db
+      - oncall-redis
+    networks:
+      - dc2-net
+
+networks:
+  dc2-net:
+    name: dc2-net
+    external: true
