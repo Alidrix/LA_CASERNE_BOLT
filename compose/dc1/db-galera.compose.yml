@@ -14,6 +14,7 @@ services:
       MARIADB_USER: passbolt
       MARIADB_PASSWORD: ${DB_PASSWORD}
     volumes:
+      - /opt/passbolt/dc1/db/data/galera-1:/bitnami/mariadb
       - ../../volumes/db/dc1/galera-1:/bitnami/mariadb
     networks:
       - dc1-net
@@ -34,6 +35,7 @@ services:
       MARIADB_USER: passbolt
       MARIADB_PASSWORD: ${DB_PASSWORD}
     volumes:
+      - /opt/passbolt/dc1/db/data/galera-2:/bitnami/mariadb
       - ../../volumes/db/dc1/galera-2:/bitnami/mariadb
     networks:
       - dc1-net

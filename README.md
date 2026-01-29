@@ -65,6 +65,7 @@ Ce LAB vise à simuler **2 sites distincts** sur une seule machine afin de valid
 ```text
 .
 ├── README.md
+├── setup_lab.sh
 ├── compose/
 │   ├── dc1/
 │   │   ├── reverse-proxy.compose.yml
@@ -334,6 +335,24 @@ docker restart passbolt
 - Docker + Docker Compose v2 installés
 - Ports disponibles sur la machine locale
 
+### Démarrage rapide via script
+Le script `setup_lab.sh` automatise la création des dossiers `/opt/passbolt`, des secrets, des réseaux, le démarrage des stacks DC1/DC2 et l'ajout des entrées DNS locales.
+
+```bash
+./setup_lab.sh
+```
+
+### Exécution manuelle (étapes principales)
+1. Préparer les fichiers `.env` depuis les exemples.
+2. Créer les secrets dans `secrets/`.
+3. Lancer les stacks `docker compose` pour DC1 et DC2.
+4. Ajouter les entrées `/etc/hosts` pour `passbolt-dc1.local` et `passbolt-dc2.local`.
+
+### Accès locaux
+- Passbolt DC1 : https://passbolt-dc1.local (Traefik exposé sur `:8081`)
+- Passbolt DC2 : https://passbolt-dc2.local (Traefik exposé sur `:8082`)
+- Grafana DC1 : http://localhost:3001
+- Grafana DC2 : http://localhost:3002
 ### 2) Préparer les variables d’environnement
 ```bash
 cp env/dc1.env.example env/dc1.env

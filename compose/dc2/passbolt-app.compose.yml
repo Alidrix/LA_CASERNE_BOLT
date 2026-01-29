@@ -13,6 +13,8 @@ services:
     secrets:
       - db_password
     volumes:
+      - /opt/passbolt/dc2/gpg_volume:/etc/passbolt/gpg
+      - /opt/passbolt/dc2/jwt_volume:/etc/passbolt/jwt
       - ../../volumes/passbolt/dc2/gpg:/etc/passbolt/gpg
       - ../../volumes/passbolt/dc2/jwt:/etc/passbolt/jwt
     labels:
