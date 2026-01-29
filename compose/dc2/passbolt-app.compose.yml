@@ -1,0 +1,33 @@
+services:
+  passbolt:
+    image: passbolt/passbolt:5.9.0-1-ce-non-root
+    container_name: dc2-passbolt
+    env_file:
+      - ../../env/dc2.env
+    environment:
+      APP_FULL_BASE_URL: ${DC2_PASSBOLT_URL}
+      DATASOURCES_DEFAULT_HOST: dc2-galera-3
+      DATASOURCES_DEFAULT_DATABASE: passbolt
+      DATASOURCES_DEFAULT_USERNAME: passbolt
+      DATASOURCES_DEFAULT_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - /opt/passbolt/dc2/gpg_volume:/etc/passbolt/gpg
+      - /opt/passbolt/dc2/jwt_volume:/etc/passbolt/jwt
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.passbolt-dc2.rule=Host(`${DC2_PASSBOLT_HOST}`)
+      - traefik.http.routers.passbolt-dc2.entrypoints=web
+      - traefik.http.services.passbolt-dc2.loadbalancer.server.port=8080
+    networks:
+      - dc2-net
+
+secrets:
+  db_password:
+    file: ../../secrets/db_password.txt
+
+networks:
+  dc2-net:
+    name: dc2-net
+    external: true
