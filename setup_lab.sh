@@ -60,6 +60,9 @@ echo "[2/7] Preparing local folders"
 sudo mkdir -p \
   "$BASE_DIR"/{dc1,dc2}/{gpg_volume,jwt_volume} \
   "$BASE_DIR"/dc1/db/data/{galera-1,galera-2} \
+  "$BASE_DIR"/dc2/db/data/galera-3 \
+  "$BASE_DIR"/dc1/observability/{prometheus,loki,grafana,oncall-db} \
+  "$BASE_DIR"/dc2/observability/{prometheus,loki,grafana,oncall-db}
   "$BASE_DIR"/dc2/db/data/galera-3
 
 sudo chown -R "$PASSBOLT_USER":"$PASSBOLT_GROUP" "$BASE_DIR"
@@ -82,12 +85,14 @@ echo "[4/7] Preparing secrets"
 
 sudo -u "$PASSBOLT_USER" mkdir -p "$SECRETS_DIR"
 
+sudo -u "$PASSBOLT_USER" bash <<'INNER_EOF'
 sudo -u "$PASSBOLT_USER" bash <<'EOF'
 set -euo pipefail
 [ -f secrets/db_password.txt ]   || openssl rand -base64 32 > secrets/db_password.txt
 [ -f secrets/smtp_password.txt ] || openssl rand -base64 32 > secrets/smtp_password.txt
 [ -f secrets/jwt_secret.txt ]    || openssl rand -base64 64 > secrets/jwt_secret.txt
 chmod 600 secrets/*.txt
+INNER_EOF
 EOF
 
 #######################################

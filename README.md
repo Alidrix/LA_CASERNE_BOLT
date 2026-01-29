@@ -87,6 +87,9 @@ Ce LAB vise à simuler **2 sites distincts** sur une seule machine afin de valid
 │   ├── dc1.env.example
 │   └── dc2.env.example
 ├── secrets/        # jamais commit (local uniquement)
+│   ├── db_password.txt
+│   ├── smtp_password.txt
+│   └── jwt_secret.txt
 │   └── db_password.txt
 ├── volumes/        # volumes Docker locaux
 └── runbooks/
@@ -334,6 +337,10 @@ docker restart passbolt
 ### 1) Pré-requis
 - Docker + Docker Compose v2 installés
 - Ports disponibles sur la machine locale
+- Accès sudo pour créer l'utilisateur `thepassbolt`, le groupe `passbolt` et les dossiers `/opt/passbolt`
+
+### Démarrage rapide via script
+Le script `setup_lab.sh` automatise la création des dossiers `/opt/passbolt`, du compte `thepassbolt:passbolt`, des secrets, des réseaux, le démarrage des stacks DC1/DC2 et l'ajout des entrées DNS locales.
 
 ### Démarrage rapide via script
 Le script `setup_lab.sh` automatise la création des dossiers `/opt/passbolt`, des secrets, des réseaux, le démarrage des stacks DC1/DC2 et l'ajout des entrées DNS locales.
