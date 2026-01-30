@@ -15,7 +15,6 @@ services:
       MARIADB_PASSWORD: ${DB_PASSWORD}
     volumes:
       - /opt/passbolt/dc2/db/data/galera-3:/bitnami/mariadb
-      - ../../volumes/db/dc2/galera-3:/bitnami/mariadb
     networks:
       - dc2-net
       - galera-net
