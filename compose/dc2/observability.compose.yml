@@ -12,7 +12,6 @@ services:
     volumes:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - /opt/passbolt/dc2/observability/prometheus:/prometheus
-      - ../../volumes/observability/dc2/prometheus:/prometheus
     networks:
       - dc2-net
 
@@ -27,7 +26,6 @@ services:
     volumes:
       - ./observability/loki-config.yml:/etc/loki/loki-config.yml:ro
       - /opt/passbolt/dc2/observability/loki:/loki
-      - ../../volumes/observability/dc2/loki:/loki
     networks:
       - dc2-net
 
@@ -43,7 +41,6 @@ services:
       - "3002:3000"
     volumes:
       - /opt/passbolt/dc2/observability/grafana:/var/lib/grafana
-      - ../../volumes/observability/dc2/grafana:/var/lib/grafana
     networks:
       - dc2-net
 
@@ -59,7 +56,6 @@ services:
       POSTGRES_PASSWORD: ${ONCALL_DB_PASSWORD}
     volumes:
       - /opt/passbolt/dc2/observability/oncall-db:/var/lib/postgresql/data
-      - ../../volumes/observability/dc2/oncall-db:/var/lib/postgresql/data
     networks:
       - dc2-net
 
